@@ -244,6 +244,18 @@
 	"use strict";
 
 	Object.implementar({
+		clonar: function () {
+			var clone = {};
+			for (var chave in this) {
+				var elemento = this[chave];
+				if (Linda.tipoDe(elemento.clonar, Function)) {
+					elemento = elemento.clonar();
+				}
+				clone[chave] = elemento;
+			}
+			return clone;
+		},
+
 		definirPropriedade: function (atributo, definicao) {
 			var propriedades = {};
 			this.privadoDefinirPropriedade(propriedades, "value", definicao.valor);
