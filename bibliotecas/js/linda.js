@@ -244,18 +244,6 @@
 	"use strict";
 
 	Object.implementar({
-		clonar: function () {
-			var clone = {};
-			for (var chave in this) {
-				var elemento = this[chave];
-				if (Linda.tipoDe(elemento.clonar, Function)) {
-					elemento = elemento.clonar();
-				}
-				clone[chave] = elemento;
-			}
-			return clone;
-		},
-
 		definirPropriedade: function (atributo, definicao) {
 			var propriedades = {};
 			this.privadoDefinirPropriedade(propriedades, "value", definicao.valor);
@@ -289,20 +277,23 @@
 		},
 
 		fundir: function (outro) {
-			outro.paraCada(function (propriedade, chave) {
-				this[chave] = propriedade;
-			}, this);
+			for (var chave in outro) {
+				if (outro.possuiPropriedadePropria(chave)) {
+					this[chave] = outro[chave];
+				}
+			}
 		},
 
 		observar: function (tratador, propriedade, tipoDeObservacao) {
 			Object.observe(this, function (observacoes) {
-				observacoes.paraCada(function (observacao) {
+				for (var indice = 0, tamanho = observacoes.length; indice < tamanho; indice++) {
+					var observacao = observacoes[indice];
 					var observacaoDesejada = (observacao.type === tipoDeObservacao || Linda.nuloOuIndefinido(tipoDeObservacao));
 					var propriedadeDesejada = (observacao.name === propriedade || Linda.nuloOuIndefinido(propriedade));
 					if (observacaoDesejada && propriedadeDesejada) {
 						tratador(observacao.object, observacao.name, observacao.type, observacao.oldValue);
 					}
-				});
+				}
 			});
 		},
 
@@ -356,7 +347,7 @@
 	Array.implementar({
 		clonar: function () {
 			var clone = new Array(this.length);
-			for (var indice = 0, tamanho = this.length; indice < tamanho; indice++) {
+			for (var indice = 0; indice < this.length; indice++) {
 				var elemento = this[indice];
 				if (Linda.tipoDe(elemento.clonar, Function)) {
 					elemento = elemento.clonar();
@@ -371,8 +362,8 @@
 		},
 
 		embaralhar: function () {
-			for (var indice = 0, tamanho = this.length - 1; indice <= tamanho; indice++) {
-				var novoIndice = Number.sortearInteiro(0, tamanho);
+			for (var indice = 0; indice < this.length; indice++) {
+				var novoIndice = Number.sortearInteiro(0, this.length - 1);
 				var valorSalvo = this[indice];
 				this[indice] = this[novoIndice];
 				this[novoIndice] = valorSalvo;
@@ -380,7 +371,7 @@
 		},
 
 		dentroDosLimites: function (indice) {
-			return (!this.vazio() && indice >= 0 && indice < this.length);
+			return (this.length !== 0 && indice >= 0 && indice < this.length);
 		},
 
 		fornecerIndice: function (elemento) {
@@ -484,25 +475,23 @@
 		}
 	});
 } ());
-/*global Linda*/
-
 (function () {
 	"use strict";
 
 	String.implementar({
 		paraInteiro: function () {
-			return Linda.global.parseInt(this);
+			return parseInt(this, 10);
 		},
 
 		paraFlutuante: function () {
-			return Linda.global.parseFloat(this);
+			return parseFloat(this, 10);
 		}
 	});
 
 	String.estender({
 		concatenar: function () {
 			var texto = "";
-			for (var indice = 0; indice < arguments.length; indice++) {
+			for (var indice = 0, tamanho = arguments.length; indice < tamanho; indice++) {
 				texto = texto + arguments[indice];
 			}
 			return texto;
@@ -510,14 +499,14 @@
 
 		concatenarComEspaco: function () {
 			var texto = "";
-			for (var indice = 0; indice < arguments.length; indice++) {
+			for (var indice = 0, tamanho = arguments.length; indice < tamanho; indice++) {
 				texto = texto + " " + arguments[indice];
 			}
 			return (arguments.length > 0) ? texto.substr(1, texto.length - 1) : texto;
 		},
 
 		formatar: function (mensagem) {
-			for (var indice = 1; indice < arguments.length; indice++) {
+			for (var indice = 1, tamanho = arguments.length; indice < tamanho; indice++) {
 				mensagem = mensagem.replace(new RegExp("%@"), arguments[indice]);
 				mensagem = mensagem.replace(new RegExp("%" + indice, "g"), arguments[indice]);
 			}
@@ -1094,7 +1083,7 @@
 		remover: function () {
 			this.tratadores.paraCada(function (eventoTratador) {
 				this.elemento.removeEventListener(eventoTratador.evento, eventoTratador.tratador);
-			});
+			}, this);
 		}
 	});
 
@@ -1218,84 +1207,3 @@
 		paraCada: Array.prototype.paraCada
 	});
 }(this));
-/*global Linda*/
-
-(function () {
-	"use strict";
-
-	Linda.definirPropriedades({
-		privadoInstanciaDeTipoPrimitivo: Linda.propriedadesDeAtributos,
-		privadoInstanciaDeDiretaOuIndireta: Linda.propriedadesDeAtributos,
-		privadoHabilitarTelaCheia: Linda.propriedadesDeAtributos,
-		privadoHabilitarTelaCheiaChrome: Linda.propriedadesDeAtributos,
-		privadoHabilitarTelaCheiaFirefox: Linda.propriedadesDeAtributos,
-		privadoDesabilitarTelaCheia: Linda.propriedadesDeAtributos,
-		privadoDesabilitarTelaCheiaChrome: Linda.propriedadesDeAtributos,
-		privadoDesabilitarTelaCheiaFirefox: Linda.propriedadesDeAtributos
-	});
-
-	Object.prototype.definirPropriedades({
-		definirPropriedade: Linda.propriedadesDeAtributos,
-		definirPropriedades: Linda.propriedadesDeAtributos,
-		privadoDefinirPropriedade: Linda.propriedadesDeAtributos,
-		fornecerPropriedades: Linda.propriedadesDeAtributos,
-		fornecerPropriedadesEnumeraveis: Linda.propriedadesDeAtributos,
-		fundir: Linda.propriedadesDeAtributos,
-		observar: Linda.propriedadesDeAtributos,
-		observarAtualizacao: Linda.propriedadesDeAtributos,
-		observarCriacao: Linda.propriedadesDeAtributos,
-		observarReconfiguracao: Linda.propriedadesDeAtributos,
-		observarRemocao: Linda.propriedadesDeAtributos,
-		desobservar: Linda.propriedadesDeAtributos,
-		paraCada: Linda.propriedadesDeAtributosGravaveis,
-		possuiPropriedade: Linda.propriedadesDeAtributos,
-		possuiPropriedadePropria: Linda.propriedadesDeAtributos,
-		prototipoDe: Linda.propriedadesDeAtributos
-	});
-
-	Function.prototype.definirPropriedades({
-		aplicarComEscopo: Linda.propriedadesDeAtributos,
-		chamarComEscopo: Linda.propriedadesDeAtributos,
-		estender: Linda.propriedadesDeAtributos,
-		implementar: Linda.propriedadesDeAtributos,
-		vincularEscopo: Linda.propriedadesDeAtributos
-	});
-
-	Array.prototype.definirPropriedades({
-		clonar: Linda.propriedadesDeAtributos,
-		contem: Linda.propriedadesDeAtributos,
-		dentroDosLimites: Linda.propriedadesDeAtributos,
-		embaralhar: Linda.propriedadesDeAtributos,
-		fornecerIndice: Linda.propriedadesDeAtributos,
-		fundir: Linda.propriedadesDeAtributos,
-		paraCada: Linda.propriedadesDeAtributos,
-		quantidadeMenorQue: Linda.propriedadesDeAtributos,
-		quantidadeMenorIgualQue: Linda.propriedadesDeAtributos,
-		quantidadeMaiorQue: Linda.propriedadesDeAtributos,
-		quantidadeMaiorIgualQue: Linda.propriedadesDeAtributos,
-		quantidadeIgual: Linda.propriedadesDeAtributos,
-		reduzir: Linda.propriedadesDeAtributos,
-		reduzirSemPrimeiro: Linda.propriedadesDeAtributos,
-		reduzirSemUltimo: Linda.propriedadesDeAtributos,
-		removerPosicao: Linda.propriedadesDeAtributos,
-		removerElemento: Linda.propriedadesDeAtributos,
-		vazio: Linda.propriedadesDeAtributos
-	});
-
-	String.prototype.definirPropriedades({
-		paraInteiro: Linda.propriedadesDeAtributos,
-		paraFlutuante: Linda.propriedadesDeAtributos
-	});
-
-	String.definirPropriedades({
-		concatenar: Linda.propriedadesDeAtributos,
-		concatenarComEspaco: Linda.propriedadesDeAtributos,
-		formatar: Linda.propriedadesDeAtributos
-	});
-
-	Number.definirPropriedades({
-		naoNumero: Linda.propriedadesDeAtributos,
-		sortear: Linda.propriedadesDeAtributos,
-		sortearInteiro: Linda.propriedadesDeAtributos
-	});
-}());
