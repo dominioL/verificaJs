@@ -1,3 +1,4 @@
+/*global Ambiente*/
 /*global Classe*/
 /*global JSHINT*/
 /*global Linda*/
@@ -69,7 +70,7 @@
 					}
 				},this);
 			}, this);
-			Linda.selecionar("div.verificaJs").appendChild(listaSecaoDeErros);
+			Ambiente.selecionar("div.verificaJs").appendChild(listaSecaoDeErros);
 		},
 
 		obterArquivo: function (nome) {
@@ -80,14 +81,14 @@
 		},
 
 		criarListaSecaoDeErros: function () {
-			var listaSecaoDeErros = Linda.documento.createElement("ul");
+			var listaSecaoDeErros = Ambiente.criarElemento("ul");
 			return listaSecaoDeErros;
 		},
 
 		criarListaErros: function (nome, listaSecaoDeErros) {
-			var itemSecaoDeErros = Linda.documento.createElement("li");
-			var tituloSecaoDeErros = Linda.documento.createElement("h1");
-			var listaErros = Linda.documento.createElement("ul");
+			var itemSecaoDeErros = Ambiente.criarElemento("li");
+			var tituloSecaoDeErros = Ambiente.criarElemento("h1");
+			var listaErros = Ambiente.criarElemento("ul");
 			tituloSecaoDeErros.textContent = nome;
 			itemSecaoDeErros.appendChild(tituloSecaoDeErros);
 			itemSecaoDeErros.appendChild(listaErros);
@@ -96,10 +97,10 @@
 		},
 
 		criarItemErro: function(erro, listaErros) {
-			var itemErro = Linda.documento.createElement("li");
-			var textoLinhaErro = Linda.documento.createElement("span");
-			var textoRazaoErro = Linda.documento.createElement("span");
-			var textoEvidenciaErro = Linda.documento.createElement("span");
+			var itemErro = Ambiente.criarElemento("li");
+			var textoLinhaErro = Ambiente.criarElemento("span");
+			var textoRazaoErro = Ambiente.criarElemento("span");
+			var textoEvidenciaErro = Ambiente.criarElemento("span");
 			textoLinhaErro.textContent = erro.line;
 			textoRazaoErro.textContent = erro.reason;
 			textoEvidenciaErro.textContent = erro.evidence;
