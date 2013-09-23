@@ -746,23 +746,23 @@
 		criar: function (corpoDaClasse) {
 			var SuperClasse = corpoDaClasse.SuperClasse;
 			var estende = Linda.instanciaDe(SuperClasse, Function);
-			function NovaClasse() {
+			function ClasseLinda() {
 				this.inicializar.aplicarComEscopo(this, arguments);
 			}
 			SuperClasse = (estende) ? SuperClasse : Objeto;
 			corpoDaClasse.SuperClasse = SuperClasse;
-			NovaClasse.prototype = Object.create(SuperClasse.prototype);
-			NovaClasse.prototipo = NovaClasse.prototype;
-			NovaClasse.implementar(corpoDaClasse);
-			NovaClasse.prototype.definirPropriedades({
+			ClasseLinda.prototype = Object.create(SuperClasse.prototype);
+			ClasseLinda.prototipo = ClasseLinda.prototype;
+			ClasseLinda.implementar(corpoDaClasse);
+			ClasseLinda.prototype.definirPropriedades({
 				SuperClasse: Linda.propriedadesDeAtributosGravaveisConfiguraveis
 			});
-			return NovaClasse;
+			return ClasseLinda;
 		},
 
 		criarSingleton: function(corpoDaClasse) {
-			var NovaClasseUnica = Classe.criar(corpoDaClasse);
-			NovaClasseUnica.estender({
+			var ClasseLindaUnica = Classe.criar(corpoDaClasse);
+			ClasseLindaUnica.estender({
 				instanciaUnica: null,
 				instancia: function () {
 					this.instanciaUnica = Object.create(this.prototipo);
@@ -780,7 +780,7 @@
 					return this.instanciaUnica;
 				}
 			});
-			return NovaClasseUnica;
+			return ClasseLindaUnica;
 		},
 
 		criarEnumeracao: function (enumeracoes, corpoDaClasse) {
@@ -876,9 +876,9 @@
 		CARREGAMENTO_FINALIZADO: "loadend",
 		CLIQUE: "click",
 		DUPLO_CLIQUE: "dbclick",
+		ESTADO_REMOVIDO: "popstate",
 		ESTOURO_DE_TEMPO: "timeout",
 		ERRO: "error",
-		HISTORICO_ALTERADO: "popstate",
 		PROGRESSO: "progress",
 		TECLA_PRESSIONADA: "keydown",
 		TECLA_SOLTA: "keyup"
@@ -1102,10 +1102,9 @@
 /*global AtributoHttp*/
 /*global Classe*/
 /*global CodigoHttp*/
+/*global Dom*/
 /*global Linda*/
 /*global MetodoHttp*/
-/*global Tratador*/
-/*global TratadorDeCarregamento*/
 /*global TipoDeMidia*/
 /*global TipoDeResposta*/
 
@@ -1113,86 +1112,86 @@
 	"use strict";
 
 	var RequisicaoHttp = Classe.criar({
-		inicializar: function (uri, tipoDeResposta) {
+		inicializar: function (uri, assincrono, tipoDeResposta) {
 			this.requisicaoXml = new XMLHttpRequest();
-			this.requisicaoXml.responseType = tipoDeResposta;
 			this.uri = uri;
 			this.usuario = null;
 			this.senha = null;
 			this.codigoDeEstado = null;
+			this.assincrono = Linda.indefinido(assincrono) ? true : !!assincrono;
 			this.cabecalho = [];
-			this.tratadorDeCarregamento = new TratadorDeCarregamento(this.requisicaoXml);
-			this.tratador = new Tratador(this.requisicaoXml);
+			if (this.assincrono) {
+				this.requisicaoXml.responseType = tipoDeResposta;
+			}
 		},
 
-		enviar: function (metodo, dados, sincrono) {
-			var assincrono = !sincrono;
+		enviar: function (metodo, dados) {
 			metodo = MetodoHttp.mapear(metodo);
-			this.requisicaoXml.open(metodo, this.uri, assincrono, this.usuario, this.senha);
+			this.requisicaoXml.open(metodo, this.uri, this.assincrono, this.usuario, this.senha);
 			this.cabecalho.paraCada(function (atributo) {
 				this.requisicaoXml.setRequestHeader(atributo.nome, atributo.valor);
 			}, this);
 			this.requisicaoXml.send(dados);
-			if (!assincrono) {
+			if (!this.assincrono) {
 				return this.fornecerResposta();
 			}
 		},
 
-		enviarGet: function (sincrono) {
-			return this.enviar(MetodoHttp.GET, null, sincrono);
+		get: function (dados) {
+			return this.enviar(MetodoHttp.GET, dados);
 		},
 
-		enviarPut: function (dados, sincrono) {
-			return this.enviar(MetodoHttp.PUT, dados, sincrono);
+		put: function (dados) {
+			return this.enviar(MetodoHttp.PUT, dados);
 		},
 
-		enviarPost: function (dados, sincrono) {
-			return this.enviar(MetodoHttp.POST, dados, sincrono);
+		post: function (dados) {
+			return this.enviar(MetodoHttp.POST, dados);
 		},
 
-		envirDelete: function (sincrono) {
-			return this.enviar(MetodoHttp.DELETE, null, sincrono);
+		delete: function (dados) {
+			return this.enviar(MetodoHttp.DELETE, dados);
 		},
 
 		tratarInicio: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraCarregamentoIniciado(tratador, escopo);
+			Dom.$(this.requisicaoXml).tratarCarregamento(tratador, escopo);
 			return this;
 		},
 
 		tratarProgresso: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraProgresso(tratador, escopo);
+			Dom.$(this.requisicaoXml).tratarProgresso(tratador, escopo);
 			return this;
 		},
 
 		tratarTermino: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraCarregamentoFinalizado(tratador, escopo);
+			Dom.$(this.requisicaoXml).tratarCarregamentoFinalizado(tratador, escopo);
 			return this;
 		},
 
 		tratarAborto: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraAborto(tratador, escopo);
+			Dom.$(this.requisicaoXml).tratarAborto(tratador, escopo);
 			return this;
 		},
 
 		tratarEstouroDeTempo: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraEstouroDeTempo(tratador, escopo);
+			Dom.$(this.requisicaoXml).tratarEstouroDeTempo(tratador, escopo);
 			return this;
 		},
 
 		tratarErro: function (tratador, escopo) {
-			this.tratador.paraErro(tratador, escopo);
+			Dom.$(this.requisicaoXml).tratarErro(tratador, escopo);
 			return this;
 		},
 
 		tratarResposta: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraCarregamento(function () {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
 				tratador.chamarComEscopo(escopo, this.fornecerResposta(), this.fornecerCodigoDeEstado());
 			}, this);
 			return this;
 		},
 
 		tratarRedirecionamento: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraCarregamento(function () {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
 				var codigoDeEstado = this.fornecerCodigoDeEstado();
 				if (codigoDeEstado.redirecionamento()) {
 					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado);
@@ -1202,7 +1201,7 @@
 		},
 
 		tratarSucesso: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraCarregamento(function () {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
 				var codigoDeEstado = this.fornecerCodigoDeEstado();
 				if (codigoDeEstado.sucesso()) {
 					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado);
@@ -1212,7 +1211,7 @@
 		},
 
 		tratarErroDoCliente: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraCarregamento(function () {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
 				var codigoDeEstado = this.fornecerCodigoDeEstado();
 				if (codigoDeEstado.erroDoCliente()) {
 					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado);
@@ -1222,7 +1221,7 @@
 		},
 
 		tratarErroDoServidor: function (tratador, escopo) {
-			this.tratadorDeCarregamento.paraCarregamento(function () {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
 				var codigoDeEstado = this.fornecerCodigoDeEstado();
 				if (codigoDeEstado.erroDoServidor()) {
 					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado);
@@ -1267,8 +1266,8 @@
 	var RequisicaoJson = Classe.criar({
 		SuperClasse: RequisicaoHttp,
 
-		inicializar: function (uri) {
-			this.super(uri, TipoDeResposta.JSON);
+		inicializar: function (uri, assincrono) {
+			this.super(uri, assincrono, TipoDeResposta.JSON);
 			this.fixarAtributoDeCabecalho(AtributoHttp.ACCEPT, TipoDeMidia.JSON.comoTexto());
 		},
 
@@ -1284,8 +1283,8 @@
 	var RequisicaoHtml = Classe.criar({
 		SuperClasse: RequisicaoHttp,
 
-		inicializar: function (uri) {
-			this.super(uri, TipoDeResposta.DOCUMENTO);
+		inicializar: function (uri, assincrono) {
+			this.super(uri, assincrono, TipoDeResposta.DOCUMENTO);
 			this.fixarAtributoDeCabecalho(AtributoHttp.ACCEPT, TipoDeMidia.HTML.comoTexto());
 		},
 	});
@@ -1293,16 +1292,16 @@
 	var RequisicaoDocumento = Classe.criar({
 		SuperClasse: RequisicaoHttp,
 
-		inicializar: function (uri) {
-			this.super(uri, TipoDeResposta.DOCUMENTO);
+		inicializar: function (uri, assincrono) {
+			this.super(uri, assincrono, TipoDeResposta.DOCUMENTO);
 		}
 	});
 
 	var RequisicaoTexto = Classe.criar({
 		SuperClasse: RequisicaoHttp,
 
-		inicializar: function (uri) {
-			this.super(uri, TipoDeResposta.TEXTO);
+		inicializar: function (uri, assincrono) {
+			this.super(uri, assincrono, TipoDeResposta.TEXTO);
 		}
 	});
 
@@ -1312,528 +1311,591 @@
 	global.RequisicaoTexto = RequisicaoTexto;
 }(this));
 /*global Classe*/
+/*global Dom*/
+/*global Tecla*/
+
+(function (global) {
+	"use strict";
+
+	var Notificavel = Classe.criar({
+		inicializar: function (elementoDom) {
+			this.elementoDom = elementoDom;
+		},
+
+		deixarDeTratar: function (evento, funcao) {
+			Dom.extrair(this).removeEventListener(evento, funcao);
+		},
+
+		tratarAlteracao: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("change", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarAlteracao: function (funcao) {
+			this.deixarDeTratar("change", funcao);
+		},
+
+		tratarAlteracaoNoHistorico: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("popstate", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarAlteracaoNoHistorico: function (funcao) {
+			this.deixarDeTratar("popstate", funcao);
+		},
+
+		tratarErro: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("error", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarErro: function (funcao) {
+			this.deixarDeTratar("error", funcao);
+		},
+
+		tratarCarregamento: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("load", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarCarregamento: function (funcao) {
+			this.deixarDeTratar("load", funcao);
+		},
+
+		tratarCarregamentoIniciado: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("loadstart", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarCarregamentoIniciado: function (funcao) {
+			this.deixarDeTratar("loadstart", funcao);
+		},
+
+		tratarCarregamentoFinalizado: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("loadend", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarCarregamentoFinalizado: function (funcao) {
+			this.deixarDeTratar("loadend", funcao);
+		},
+
+		tratarProgresso: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("progress", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarProgresso: function (funcao) {
+			this.deixarDeTratar("progress", funcao);
+		},
+
+		tratarAborto: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("abort", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarAborto: function (funcao) {
+			this.deixarDeTratar("abort", funcao);
+		},
+
+		tratarEstouroDeTempo: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("timeout", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarEstouroDeTempo: function (funcao) {
+			this.deixarDeTratar("timeout", funcao);
+		},
+
+		tratarClique: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("click", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarClique: function (funcao) {
+			this.deixarDeTratar("click", funcao);
+		},
+
+		tratarCliqueDuplo: function (tratador, escopo) {
+			tratador = tratador.vincularEscopo(escopo);
+			Dom.extrair(this).addEventListener("dbclick", tratador);
+			return tratador;
+		},
+
+		deixarDeTratarCliqueDuplo: function (funcao) {
+			this.deixarDeTratar("dbclick", funcao);
+		},
+
+		tratarTeclaPressionada: function (tecla, tratador, escopo) {
+			var tratadorPersonalizado = function (evento) {
+				if (tecla === evento.keyCode) {
+					tratador.chamarComEscopo(escopo);
+				}
+			};
+			Dom.extrair(this).addEventListener("keydown", tratadorPersonalizado);
+			return tratadorPersonalizado;
+		},
+
+		deixarDeTratarTeclaPressionada: function (funcao) {
+			this.deixarDeTratar("keydown", funcao);
+		},
+
+		tratarTeclaSolta: function (tecla, tratador, escopo) {
+			var tratadorPersonalizado = function (evento) {
+				if (tecla === evento.keyCode) {
+					tratador.chamarComEscopo(escopo);
+				}
+			};
+			Dom.extrair(this).addEventListener("keyup", tratadorPersonalizado);
+			return tratadorPersonalizado;
+		},
+
+		deixarDeTratarTeclaSolta: function (funcao) {
+			this.deixarDeTratar("keyup", funcao);
+		},
+
+		tratarQualquerTeclaPressionada: function (tratador, escopo) {
+			var tratadorPersonalizado = function (evento) {
+				if (Tecla.APAGAR !== evento.keyCode) {
+					tratador.chamarComEscopo(escopo);
+				}
+			};
+			Dom.extrair(this).addEventListener("keydown", tratadorPersonalizado);
+			return tratadorPersonalizado;
+		},
+
+		tratarQualquerTeclaSolta: function (tratador, escopo) {
+			var tratadorPersonalizado = function (evento) {
+				if (Tecla.APAGAR !== evento.keyCode) {
+					tratador.chamarComEscopo(escopo);
+				}
+			};
+			Dom.extrair(this).addEventListener("keyup", tratadorPersonalizado);
+			return tratadorPersonalizado;
+		}
+	});
+
+	global.Notificavel = Notificavel;
+}(this));
+/*global Classe*/
+/*global Dom*/
+/*global Notificavel*/
+
+(function (global) {
+	"use strict";
+
+	var Janela = Classe.criar({
+		SuperClasse: Notificavel,
+
+		inicializar: function (elementoDom) {
+			Notificavel.prototipo.inicializar.chamarComEscopo(this, elementoDom);
+		},
+
+		iniciarTemporizador: function (tratador, tempo, escopo) {
+			return Dom.extrair(this).setTimeout(tratador.vincularEscopo(escopo), tempo);
+		},
+
+		iniciarTemporizadorContinuo: function (tratador, tempo, escopo) {
+			return Dom.extrair(this).setInterval(tratador.vincularEscopo(escopo), tempo);
+		},
+
+		iniciarTemporizadorImediato: function (tratador, tempo, escopo) {
+			return Dom.extrair(this).setImmediate(tratador.vincularEscopo(escopo), tempo);
+		},
+
+		cancelarTemporizador: function (identificador) {
+			Dom.extrair(this).clearTimeout(identificador);
+		},
+
+		cancelarTemporizadorContinuo: function (identificador) {
+			Dom.extrair(this).clearInterval(identificador);
+		},
+
+		cancelarTemporizadorImediato: function (identificador) {
+			Dom.extrair(this).clearImediate(identificador);
+		}
+	});
+
+	global.Janela = Janela;
+}(this));
+/*global Classe*/
+/*global Dom*/
+/*global Notificavel*/
+
+(function (global) {
+	"use strict";
+
+	var Nodo = Classe.criar({
+		SuperClasse: Notificavel,
+
+		inicializar: function (elementoDom) {
+			Notificavel.prototipo.inicializar.chamarComEscopo(this, elementoDom);
+		},
+
+		adicionarNodo: function (nodo) {
+			return Dom.extrair(this).appendChild(Dom.extrair(nodo));
+		},
+
+		adicionarNodoNoInicio: function (nodo) {
+			return Dom.extrair(this).insertBefore(Dom.extrair(nodo), Dom.extrair(this.primeiroFilho));
+		},
+
+		adicionarNodoAntesDe: function (nodo, nodoReferencia) {
+			return Dom.extrair(this).insertBefore(Dom.extrair(nodo), Dom.extrair(nodoReferencia));
+		},
+
+		clonarNodo: function (clonarFilhos) {
+			return Dom.extrair(this).cloneNode(clonarFilhos);
+		},
+
+		normalizarNodos: function () {
+			Dom.extrair(this).normalize();
+		},
+
+		possuiNodos: function () {
+			return Dom.extrair(this).hasChildNodes();
+		},
+
+		possuiNodo: function (nodo) {
+			return Dom.extrair(this).contains(Dom.extrair(nodo));
+		},
+
+		removerNodo: function (nodo) {
+			return Dom.extrair(this).removeChild(Dom.extrair(nodo));
+		},
+
+		substituirNodo: function (nodoNovo, nodoAntigo) {
+			return Dom.extrair(this).replaceChild(Dom.extrair(nodoNovo), Dom.extrair(nodoAntigo));
+		}
+	});
+
+	Nodo.prototype.definirPropriedades({
+		texto: {
+			fornecer: function () {
+				return Dom.extrair(this).textContent;
+			},
+
+			fixar: function (valor) {
+				Dom.extrair(this).textContent = valor;
+			}
+		},
+
+		nodoFilhos: {
+			fornecer: function () {
+				return Dom.encapsular(Dom.extrair(this).childNodes);
+			}
+		},
+
+		primeiroNodoFilho: {
+			fornecer: function () {
+				return Dom.encapsular(Dom.extrair(this).firstChild);
+			}
+		},
+
+		ultimoNodoFilho: {
+			fornecer: function () {
+				return Dom.encapsular(Dom.extrair(this).lastChild);
+			}
+		},
+
+		nodoPai: {
+			fornecer: function () {
+				return Dom.encapsular(Dom.extrair(this).parentNode);
+			}
+		}
+	});
+
+	global.Nodo = Nodo;
+}(this));
+/*global Classe*/
+/*global Dom*/
 /*global Linda*/
+/*global Nodo*/
+
+(function (global) {
+	"use strict";
+
+	var Documento = Classe.criar({
+		SuperClasse: Nodo,
+
+		inicializar: function (elementoDom) {
+			Nodo.prototipo.inicializar.chamarComEscopo(this, elementoDom);
+		},
+
+		criarComentario: function (comentario) {
+			return Dom.encapsular(Dom.extrair(this).createComment(comentario));
+		},
+
+		criarElemento: function (elemento) {
+			return Dom.encapsular(Dom.extrair(this).createElement(elemento));
+		},
+
+		criarTexto: function (texto) {
+			return Dom.encapsular(Dom.extrair(this).createTextNode(texto));
+		},
+
+		selecionar: function (seletor) {
+			return Dom.encapsular(Dom.extrair(this).querySelector(seletor));
+		},
+
+		selecionarTodos: function (seletor) {
+			return Dom.encapsular(Dom.extrair(this).querySelectorAll(seletor));
+		},
+
+		habilitarTelaCheia: function () {
+			if (Linda.instanciaDe(Dom.extrair(this).documentElement.requestFullScreen, Function)) {
+				Dom.extrair(this).documentElement.requestFullScreen();
+			} else if (Linda.instanciaDe(Dom.extrair(this).documentElement.mozRequestFullScreen, Function)) {
+				Dom.extrair(this).documentElement.mozRequestFullScreen();
+			} else if (Linda.instanciaDe(Dom.extrair(this).documentElement.webkitRequestFullScreen, Function)) {
+				Dom.extrair(this).documentElement.webkitRequestFullScreen();
+			}
+		},
+
+		desabilitarTelaCheia: function () {
+			if (Linda.instanciaDe(Dom.extrair(this).cancelFullScreen, Function)) {
+				Dom.extrair(this).cancelFullScreen();
+			} else if (Linda.instanciaDe(Dom.extrair(this).webkitCancelFullScreen, Function)) {
+				Dom.extrair(this).webkitCancelFullScreen();
+			} else if (Linda.instanciaDe(Dom.extrair(this).mozCancelFullScreen, Function)) {
+				Dom.extrair(this).mozCancelFullScreen();
+			}
+		}
+	});
+
+	global.Documento = Documento;
+}(this));
+/*global Classe*/
+/*global Dom*/
+/*global Nodo*/
+
+(function (global) {
+	"use strict";
+
+	var Elemento = Classe.criar({
+		SuperClasse: Nodo,
+
+		inicializar: function (elementoDom) {
+			Nodo.prototipo.inicializar.chamarComEscopo(this, elementoDom);
+		},
+
+		fornecerAtributo: function (nome) {
+			return Dom.extrair(this).getAttribute(nome);
+		},
+
+		fixarAtributo: function (nome, valor) {
+			Dom.extrair(this).setAttribute(nome, valor);
+		},
+
+		removerAtributo: function (nome) {
+			Dom.extrair(this).removeAttribute(nome);
+		},
+
+		possuiAtributo: function (nome) {
+			return Dom.extrair(this).hasAttribute(nome);
+		},
+
+		combina: function (seletor) {
+			return Dom.extrair(this).matches(seletor);
+		},
+
+		rolarParaTopo: function () {
+			Dom.extrair(this).scrollIntoView(true);
+		},
+
+		rolarParaBase: function () {
+			Dom.extrair(this).scrollIntoView(false);
+		},
+
+		selecionar: function (selecao) {
+			return Dom.encapsular(Dom.extrair(this).querySelector(selecao));
+		},
+
+		selecionarTodos: function (selecao) {
+			return Dom.encapsular(Dom.extrair(this).querySelectorAll(selecao));
+		},
+
+		obterPelaClasse: function (classe) {
+			return Dom.encapsular(Dom.extrair(this).getElementsByClassName(classe).item(0));
+		},
+
+		obterTodosPelaClasse: function (classe) {
+			return Dom.encapsular(Dom.extrair(this).getElementsByClassName(classe));
+		},
+
+		obterPeloNome: function (nome) {
+			return Dom.encapsular(Dom.extrair(this).getElementsByName(nome).item(0));
+		},
+
+		obterTodosPeloNome: function (nome) {
+			return Dom.encapsular(Dom.extrair(this).getElementsByName(nome));
+		},
+
+		obterPeloIdentificador: function (identificador) {
+			return Dom.encapsular(Dom.extrair(this).getElementById(identificador));
+		},
+
+		adicionarClasse: function (classe) {
+			Dom.extrair(this).classList.add(classe);
+		},
+
+		removerClasse: function (classe) {
+			Dom.extrair(this).classList.remove(classe);
+		}
+	});
+
+	Elemento.prototype.definirPropriedades({
+		filhos: {
+			fornecer: function () {
+				return Dom.encapsular(Dom.extrair(this).children);
+			}
+		},
+
+		primeiroFilho: {
+			fornecer: function () {
+				return Dom.encapsular(Dom.extrair(this).firstElementChild);
+			}
+		},
+
+		ultimoFilho: {
+			fornecer: function () {
+				return Dom.encapsular(Dom.extrair(this).lastElementChild);
+			}
+		},
+
+		identificador: {
+			fornecer: function () {
+				return Dom.extrair(this).id;
+			},
+
+			fixar: function (novoIdentificador) {
+				Dom.extrair(this).id = novoIdentificador;
+			}
+		},
+
+		classe: {
+			fornecer: function () {
+				return Dom.extrair(this).className;
+			},
+
+			fixar: function (novaClasse) {
+				Dom.extrair(this).className = novaClasse;
+			}
+		},
+
+		htmlInterno: {
+			fornecer: function () {
+				return Dom.extrair(this).innerHTML;
+			},
+
+			fixar: function (html) {
+				Dom.extrair(this).innerHTML = html;
+			}
+		},
+
+		htmlExterno: {
+			fornecer: function () {
+				return Dom.extrair(this).outerHTML;
+			},
+
+			fixar: function (html) {
+				Dom.extrair(this).outerHTML = html;
+			}
+		}
+	});
+
+	global.Elemento = Elemento;
+}(this));
+/*global Classe*/
+/*global Document*/
+/*global Documento*/
+/*global Element*/
+/*global Elemento*/
+/*global HTMLCollection*/
+/*global Janela*/
+/*global Linda*/
+/*global Node*/
+/*global NodeList*/
+/*global Nodo*/
+/*global Notificavel*/
+/*global Window*/
 
 (function (global) {
 	"use strict";
 
 	var Dom = Classe.criarSingleton({
 		inicializar: function () {
-			this.global = global;
-			this.janela = (window || global);
+			this.janela = window;
 			this.documento = this.janela.document;
 			this.historico = this.janela.history;
 			this.localizacao = this.janela.location;
-			this.performance = this.janela.performance;
+			this.janelaDom = this.encapsular(this.janela);
+			this.documentoDom = this.encapsular(this.documento);
 		},
 
-		criarComentario: function (comentario) {
-			return this.documento.createComment(comentario);
-		},
-
-		criarElemento: function (elemento) {
-			return this.documento.createElement(elemento);
-		},
-
-		criarTexto: function (texto) {
-			return this.documento.createTextNode(texto);
-		},
-
-		selecionar: function (seletor) {
-			return this.documento.querySelector(seletor);
-		},
-
-		selecionarTodos: function (seletor) {
-			return this.documento.querySelectorAll(seletor);
-		},
-
-		avaliar: function (texto) {
-			return this.janela.eval(texto);
-		},
-
-		habilitarTelaCheia: function () {
-			if (Linda.instanciaDe(this.documento.documentElement.requestFullScreen, Function)) {
-				this.documento.documentElement.requestFullScreen();
-			} else if (Linda.instanciaDe(this.documento.documentElement.mozRequestFullScreen, Function)) {
-				this.documento.documentElement.mozRequestFullScreen();
-			} else if (Linda.instanciaDe(this.documento.documentElement.webkitRequestFullScreen, Function)) {
-				this.documento.documentElement.webkitRequestFullScreen();
+		encapsular: function (elementoDom) {
+			if (Linda.instanciaDe(elementoDom, NodeList)) {
+				return new ListaDom(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, HTMLCollection)) {
+				return new ListaDom(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, Element)) {
+				return new Elemento(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, Document)) {
+				return new Documento(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, Node)) {
+				return new Nodo(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, Window)) {
+				return new Janela(elementoDom);
+			} else {
+				return new Notificavel(elementoDom);
 			}
 		},
 
-		desabilitarTelaCheia: function () {
-			if (Linda.instanciaDe(this.documento.cancelFullScreen, Function)) {
-				this.documento.cancelFullScreen();
-			} else if (Linda.instanciaDe(this.documento.webkitCancelFullScreen, Function)) {
-				this.documento.webkitCancelFullScreen();
-			} else if (Linda.instanciaDe(this.documento.mozCancelFullScreen, Function)) {
-				this.documento.mozCancelFullScreen();
+		extrair: function (suplementoDom) {
+			return suplementoDom.elementoDom;
+		},
+
+		$: function (seletorOuElemento) {
+			if (Linda.instanciaDe(seletorOuElemento, String)) {
+				return this.documentoDom.selecionar(seletorOuElemento);
 			}
+			return this.encapsular(seletorOuElemento);
+		},
+
+		$$: function (seletorOuElemento) {
+			if (Linda.instanciaDe(seletorOuElemento, String)) {
+				return this.documentoDom.selecionarTodos(seletorOuElemento);
+			}
+			return this.encapsular(seletorOuElemento);
 		}
 	}).instancia();
 
-	var $ = function (seletor) {
-		return Dom.selecionar(seletor);
-	};
+	var ListaDom = Classe.criar({
+		inicializar: function (elementosDom) {
+			this.elementosDom = elementosDom;
+		},
 
-	var $$ = function (seletor) {
-		return Dom.selecionarTodos(seletor);
-	};
+		paraCada: function (tratador, escopo) {
+			for (var indice = 0; indice < this.elementosDom.length; indice++) {
+				tratador.chamarComEscopo(escopo, Dom.encapsular(this.elementosDom.item(indice), indice));
+			}
+		}
+	});
 
 	global.Dom = Dom;
-	global.$ = $;
-	global.$$ = $$;
-}(this));
-/*global Tratador*/
-/*global TratadorDeCarregamento*/
-/*global TratadorDeMouse*/
-/*global TratadorDeTeclado*/
-
-(function () {
-	"use strict";
-
-	Node.implementar = Function.prototype.implementar;
-
-	Node.implementar({
-		tratarAlteracao: function (tratador, escopo) {
-			return new Tratador(this).paraAlteracao(tratador, escopo);
-		},
-
-		tratarAlteracaoNoHistorico: function (tratador, escopo) {
-			return new Tratador(this).paraAlteracaoNoHistorico(tratador, escopo);
-		},
-
-		tratarErro: function (tratador, escopo) {
-			return new Tratador(this).paraErro(tratador, escopo);
-		},
-
-		tratarCarregamento: function (tratador, escopo) {
-			return new TratadorDeCarregamento(this).paraCarregamento(tratador, escopo);
-		},
-
-		tratarCarregamentoIniciado: function (tratador, escopo) {
-			return new TratadorDeCarregamento(this).paraCarregamentoIniciado(tratador, escopo);
-		},
-
-		tratarCarregamentoFinalizado: function (tratador, escopo) {
-			return new TratadorDeCarregamento(this).paraCarregamentoFinalizado(tratador, escopo);
-		},
-
-		tratarProgresso: function (tratador, escopo) {
-			return new TratadorDeCarregamento(this).paraProgresso(tratador, escopo);
-		},
-
-		tratarAborto: function (tratador, escopo) {
-			return new TratadorDeCarregamento(this).paraAborto(tratador, escopo);
-		},
-
-		tratarEstouroDeTempo: function (tratador, escopo) {
-			return new TratadorDeCarregamento(this).paraEstouroDeTempo(tratador, escopo);
-		},
-
-		tratarClique: function (tratador, escopo) {
-			return new TratadorDeMouse(this).paraClique(tratador, escopo);
-		},
-
-		tratarCliqueDuplo: function (tratador, escopo) {
-			return new TratadorDeMouse(this).paraCliqueDuplo(tratador, escopo);
-		},
-
-		tratarTeclaPressionada: function (tecla, tratador, escopo) {
-			return new TratadorDeTeclado(this).paraTeclaPressionada(tecla, tratador, escopo);
-		},
-
-		tratarTeclaSolta: function (tecla, tratador, escopo) {
-			return new TratadorDeTeclado(this).paraTeclaSolta(tecla, tratador, escopo);
-		},
-
-		tratarQualquerTeclaPressionada: function (tratador, escopo) {
-			return new TratadorDeTeclado(this).paraQualquerTeclaPressionada(tratador, escopo);
-		},
-
-		tratarQualquerTeclaSolta: function (tratador, escopo) {
-			return new TratadorDeTeclado(this).paraQualquerTeclaSolta(tratador, escopo);
-		}
-	});
-}(this));
-/*global NodeList*/
-
-(function () {
-	"use strict";
-
-	Node.implementar = Function.prototype.implementar;
-	NodeList.implementar = Function.prototype.implementar;
-
-	Node.implementar({
-		adicionarNodo: function (nodo) {
-			return this.appendChild(nodo);
-		},
-
-		adicionarNodoNoInicio: function (nodo) {
-			return this.insertBefore(nodo, this.primeiroFilho);
-		},
-
-		adicionarNodoAntesDe: function (nodo, nodoReferencia) {
-			return this.insertBefore(nodo, nodoReferencia);
-		},
-
-		clonarNodo: function (clonarFilhos) {
-			return this.cloneNode(clonarFilhos);
-		},
-
-		normalizarNodos: function () {
-			this.normalize();
-		},
-
-		possuiAtributos: function () {
-			return this.hasAttributes();
-		},
-
-		possuiNodos: function () {
-			return this.hasChildNodes();
-		},
-
-		possuiNodo: function (nodo) {
-			return this.contains(nodo);
-		},
-
-		removerNodo: function (nodo) {
-			return this.removeChild(nodo);
-		},
-
-		substituirNodo: function (nodoNovo, nodoAntigo) {
-			return this.replaceChild(nodoNovo, nodoAntigo);
-		}
-	});
-
-	Node.prototype.definirPropriedades({
-		texto: {
-			fornecer: function () {
-				return this.textContent;
-			},
-
-			fixar: function (valor) {
-				this.textContent = valor;
-			}
-		},
-
-		nodoFilhos: {
-			fornecer: function () {
-				return this.childNodes;
-			}
-		},
-
-		primeiroNodoFilho: {
-			fornecer: function () {
-				return this.firstChild;
-			}
-		},
-
-		ultimoNodoFilho: {
-			fornecer: function () {
-				return this.lastChild;
-			}
-		},
-
-		nodoPai: {
-			fornecer: function () {
-				return this.parentNode;
-			}
-		}
-	});
-
-	NodeList.implementar({
-		padaCada: function (tratador, escopo) {
-			for (var indice = 0; indice < this.length; indice++) {
-				tratador.chamarComEscopo(escopo, this.item(indice), indice);
-			}
-		}
-	});
-}(this));
-/*global Element*/
-/*global HTMLCollection*/
-
-(function () {
-	"use strict";
-
-	Element.implementar = Function.prototype.implementar;
-	HTMLCollection.implementar = Function.prototype.implementar;
-
-	Element.implementar({
-		fornecerAtributo: function (nome) {
-			return this.getAttribute(nome);
-		},
-
-		fixarAtributo: function (nome, valor) {
-			this.setAttribute(nome, valor);
-		},
-
-		removerAtributo: function (nome) {
-			this.removeAttribute(nome);
-		},
-
-		possuiAtributo: function (nome) {
-			return this.hasAttribute(nome);
-		},
-
-		combina: function (seletor) {
-			return this.matches(seletor);
-		},
-
-		rolarParaTopo: function () {
-			this.scrollIntoView(true);
-		},
-
-		rolarParaBase: function () {
-			this.scrollIntoView(false);
-		},
-
-		selecionar: function (selecao) {
-			return this.querySelector(selecao);
-		},
-
-		selecionarTodos: function (selecao) {
-			return this.querySelectorAll(selecao);
-		},
-
-		obterPelaClasse: function (classe) {
-			return this.getElementsByClassName(classe)[0];
-		},
-
-		obterTodosPelaClasse: function (classe) {
-			return this.getElementsByClassName(classe);
-		},
-
-		obterPeloNome: function (nome) {
-			return this.getElementsByName(nome)[0];
-		},
-
-		obterTodosPeloNome: function (nome) {
-			return this.getElementsByName(nome);
-		},
-
-		obterPeloIdentificador: function (identificador) {
-			return this.getElementById(identificador);
-		}
-	});
-
-	Element.prototype.definirPropriedades({
-		filhos: {
-			fornecer: function () {
-				return this.children;
-			}
-		},
-
-		primeiroFilho: {
-			fornecer: function () {
-				return this.firstElementChild;
-			}
-		},
-
-		ultimoFilho: {
-			fornecer: function () {
-				return this.lastElementChild;
-			}
-		},
-
-		identificador: {
-			fornecer: function () {
-				return this.id;
-			},
-
-			fixar: function (novoIdentificador) {
-				this.id = novoIdentificador;
-			}
-		},
-
-		classe: {
-			fornecer: function () {
-				return this.className;
-			},
-
-			fixar: function (novaClasse) {
-				this.className = novaClasse;
-			}
-		},
-
-		htmlInterno: {
-			fornecer: function () {
-				return this.innerHTML;
-			},
-
-			fixar: function (html) {
-				this.innerHTML = html;
-			}
-		},
-
-		htmlExterno: {
-			fornecer: function () {
-				return this.outerHTML;
-			},
-
-			fixar: function (html) {
-				this.outerHTML = html;
-			}
-		}
-	});
-
-	HTMLCollection.implementar({
-		padaCada: function (tratador, escopo) {
-			for (var indice = 0; indice < this.length; indice++) {
-				tratador.chamarComEscopo(escopo, this.item(indice), indice);
-			}
-		}
-	});
-}(this));
-/*global Classe*/
-/*global Dom*/
-/*global Evento*/
-/*global Tecla*/
-
-(function (global) {
-	"use strict";
-
-	var Tratador = Classe.criar({
-		inicializar: function (elemento) {
-			this.elemento = elemento || Dom.janela;
-			this.eventosTratadores = [];
-		},
-
-		adicionar: function (evento, tratador) {
-			var eventoTratador = {
-				evento: evento,
-				tratador: tratador
-			};
-			this.eventosTratadores.push(eventoTratador);
-			this.elemento.addEventListener(evento, tratador);
-		},
-
-		remover: function () {
-			this.eventosTratadores.paraCada(function (eventoTratador) {
-				this.elemento.removeEventListener(eventoTratador.evento, eventoTratador.tratador);
-			}, this);
-		},
-
-		paraAlteracao: function (tratador, escopo) {
-			this.adicionar(Evento.ALTERADO, tratador.vincularEscopo(escopo));
-			return this;
-		},
-
-		paraAlteracaoNoHistorico: function (tratador, escopo) {
-			this.adicionar(Evento.HISTORICO_ALTERADO, tratador.vincularEscopo(escopo));
-			return this;
-		},
-
-		paraErro: function (tratador, escopo) {
-			this.adicionar(Evento.ERRO, tratador.vincularEscopo(escopo));
-			return this;
-		}
-	});
-
-	var TratadorDeCarregamento = Classe.criar({
-		SuperClasse: Tratador,
-
-		inicializar: function (elemento) {
-			this.super(elemento);
-		},
-
-		paraCarregamento: function (tratador, escopo) {
-			this.adicionar(Evento.CARREGADO, tratador.vincularEscopo(escopo));
-			return this;
-		},
-
-		paraCarregamentoIniciado: function (tratador, escopo) {
-			this.adicionar(Evento.CARREGAMENTO_INICIADO, tratador.vincularEscopo(escopo));
-			return this;
-		},
-
-		paraCarregamentoFinalizado: function (tratador, escopo) {
-			this.adicionar(Evento.CARREGAMENTO_FINALIZADO, tratador.vincularEscopo(escopo));
-			return this;
-		},
-
-		paraProgresso: function (tratador, escopo) {
-			this.adicionar(Evento.PROGRESSO, tratador.vincularEscopo(escopo));
-			return this;
-		},
-
-		paraAborto: function (tratador, escopo) {
-			this.adicionar(Evento.ABORTADO, tratador.vincularEscopo(escopo));
-			return this;
-		},
-
-		paraEstouroDeTempo: function (tratador, escopo) {
-			this.adicionar(Evento.ESTOURO_DE_TEMPO, tratador.vincularEscopo(escopo));
-			return this;
-		}
-	});
-
-	var TratadorDeTeclado = Classe.criar({
-		SuperClasse: Tratador,
-
-		inicializar: function (elemento) {
-			this.super(elemento);
-		},
-
-		paraTeclaPressionada: function (tecla, tratador, escopo) {
-			this.adicionar(Evento.TECLA_PRESSIONADA, this.adicionarTratadorDeTeclado(tecla, tratador, escopo));
-			return this;
-		},
-
-		paraTeclaSolta: function (tecla, tratador, escopo) {
-			this.adicionar(Evento.TECLA_SOLTA, this.adicionarTratadorDeTeclado(tecla, tratador, escopo));
-			return this;
-		},
-
-		paraQualquerTeclaPressionada: function (tratador, escopo) {
-			this.adicionar(Evento.TECLA_PRESSIONADA, this.adicionarTratadorDeTecladoParaQualquer(tratador, escopo));
-			return this;
-		},
-
-		paraQualquerTeclaSolta: function (tratador, escopo) {
-			this.adicionar(Evento.TECLA_SOLTA, this.adicionarTratadorDeTecladoParaQualquer(tratador, escopo));
-			return this;
-		},
-
-		adicionarTratadorDeTeclado: function (tecla, tratador, escopo) {
-			return function (evento) {
-				if (tecla === evento.keyCode) {
-					tratador.chamarComEscopo(escopo);
-				}
-			};
-		},
-
-		adicionarTratadorDeTecladoParaQualquer: function (tratador, escopo) {
-			return function (evento) {
-				if (Tecla.APAGAR !== evento.keyCode) {
-					tratador.chamarComEscopo(escopo);
-				}
-			};
-		}
-	});
-
-	var TratadorDeMouse = Classe.criar({
-		SuperClasse: Tratador,
-
-		inicializar: function (elemento) {
-			this.super(elemento);
-		},
-
-		paraClique: function (tratador, escopo) {
-			this.adicionar(Evento.CLIQUE, tratador.vincularEscopo(escopo));
-			return this;
-		},
-
-		paraDuploClique: function (tratador, escopo) {
-			this.adicionar(Evento.DUPLO_CLIQUE, tratador.vincularEscopo(escopo));
-			return this;
-		}
-	});
-
-	global.Tratador = Tratador;
-	global.TratadorDeCarregamento = TratadorDeCarregamento;
-	global.TratadorDeTeclado = TratadorDeTeclado;
-	global.TratadorDeMouse = TratadorDeMouse;
+	global.ListaDom = ListaDom;
+	global.documento = Dom.documento;
+	global.janela = Dom.janela;
 }(this));
 /*global Linda*/
 

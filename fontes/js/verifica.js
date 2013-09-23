@@ -70,47 +70,45 @@
 					}
 				},this);
 			}, this);
-			Dom.selecionar("div.verificaJs").appendChild(listaSecaoDeErros);
+			Dom.$("div.verificaJs").adicionarNodo(listaSecaoDeErros);
 		},
 
 		obterArquivo: function (nome) {
-			var requisicao = new XMLHttpRequest();
-			requisicao.open("GET", nome, false);
-			requisicao.send();
-			return requisicao.responseText;
+			var requisicao = new RequisicaoTexto(nome, false);
+			return requisicao.get();
 		},
 
 		criarListaSecaoDeErros: function () {
-			var listaSecaoDeErros = Dom.criarElemento("ul");
+			var listaSecaoDeErros = Dom.$(documento).criarElemento("ul");
 			return listaSecaoDeErros;
 		},
 
 		criarListaErros: function (nome, listaSecaoDeErros) {
-			var itemSecaoDeErros = Dom.criarElemento("li");
-			var tituloSecaoDeErros = Dom.criarElemento("h1");
-			var listaErros = Dom.criarElemento("ul");
-			tituloSecaoDeErros.textContent = nome;
-			itemSecaoDeErros.appendChild(tituloSecaoDeErros);
-			itemSecaoDeErros.appendChild(listaErros);
-			listaSecaoDeErros.appendChild(itemSecaoDeErros);
+			var itemSecaoDeErros = Dom.$(documento).criarElemento("li");
+			var tituloSecaoDeErros = Dom.$(documento).criarElemento("h1");
+			var listaErros = Dom.$(documento).criarElemento("ul");
+			tituloSecaoDeErros.texto = nome;
+			itemSecaoDeErros.adicionarNodo(tituloSecaoDeErros);
+			itemSecaoDeErros.adicionarNodo(listaErros);
+			listaSecaoDeErros.adicionarNodo(itemSecaoDeErros);
 			return listaErros;
 		},
 
 		criarItemErro: function(erro, listaErros) {
-			var itemErro = Dom.criarElemento("li");
-			var textoLinhaErro = Dom.criarElemento("span");
-			var textoRazaoErro = Dom.criarElemento("span");
-			var textoEvidenciaErro = Dom.criarElemento("span");
-			textoLinhaErro.textContent = erro.line;
-			textoRazaoErro.textContent = erro.reason;
-			textoEvidenciaErro.textContent = erro.evidence;
-			textoLinhaErro.classList.add("linha");
-			textoRazaoErro.classList.add("razao");
-			textoEvidenciaErro.classList.add("evidencia");
-			itemErro.appendChild(textoLinhaErro);
-			itemErro.appendChild(textoRazaoErro);
-			itemErro.appendChild(textoEvidenciaErro);
-			listaErros.appendChild(itemErro);
+			var itemErro = Dom.$(documento).criarElemento("li");
+			var textoLinhaErro = Dom.$(documento).criarElemento("span");
+			var textoRazaoErro = Dom.$(documento).criarElemento("span");
+			var textoEvidenciaErro = Dom.$(documento).criarElemento("span");
+			textoLinhaErro.texto = erro.line;
+			textoRazaoErro.texto = erro.reason;
+			textoEvidenciaErro.texto = erro.evidence;
+			textoLinhaErro.adicionarClasse("linha");
+			textoRazaoErro.adicionarClasse("razao");
+			textoEvidenciaErro.adicionarClasse("evidencia");
+			itemErro.adicionarNodo(textoLinhaErro);
+			itemErro.adicionarNodo(textoRazaoErro);
+			itemErro.adicionarNodo(textoEvidenciaErro);
+			listaErros.adicionarNodo(itemErro);
 		}
 	});
 
