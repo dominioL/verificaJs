@@ -1,4 +1,4 @@
-(function (global) {
+(function (contexto) {
 	"use strict";
 
 	var ExcecaoLinda = function (mensagem) {
@@ -96,6 +96,10 @@
 			return (valor === undefined);
 		},
 
+		existe: function (valor) {
+			return (valor !== null && valor !== undefined);
+		},
+
 		assegureQue: function (condicao) {
 			if (!condicao) {
 				throw new ExcecaoLinda("Asserção inválida. Quebra de contrato.");
@@ -107,7 +111,7 @@
 		}
 	};
 
-	global.Linda = Linda;
+	contexto.Linda = Linda;
 }(this));
 (function () {
 	"use strict";
@@ -142,11 +146,10 @@
 		}
 	});
 }(this));
-/*global Linda*/
-/*global TipoDeObservacao*/
-
-(function () {
+(function (contexto) {
 	"use strict";
+
+	var Linda = contexto.Linda;
 
 	Object.implementar({
 		cadaPropriedade: function (iterador, escopo) {
@@ -442,36 +445,60 @@
 		},
 
 		observarAtualizacao: function (tratador, propriedade) {
+			var TipoDeObservacao = contexto.TipoDeObservacao;
 			this.observar(tratador, propriedade, TipoDeObservacao.ATUALIZACAO);
 		},
 
 		observarCriacao: function (tratador, propriedade) {
+			var TipoDeObservacao = contexto.TipoDeObservacao;
 			this.observar(tratador, propriedade, TipoDeObservacao.CRIACAO);
 		},
 
 		observarReconfiguracao: function (tratador, propriedade) {
+			var TipoDeObservacao = contexto.TipoDeObservacao;
 			this.observar(tratador, propriedade, TipoDeObservacao.RECONFIGURACAO);
 		},
 
 		observarRemocao: function (tratador, propriedade) {
+			var TipoDeObservacao = contexto.TipoDeObservacao;
 			this.observar(tratador, propriedade, TipoDeObservacao.REMOCAO);
 		},
 
 		desobservar: function (tratador) {
 			Object.unobserve(this, tratador);
 		},
+
+		removerPropriedade: function (propriedade) {
+			delete this[propriedade];
+		}
 	});
 
 	Object.implementar({
 		paraCada: Object.cadaPropriedadePropriaEnumeravel
 	});
 }(this));
-/*global Linda*/
-
-(function () {
+(function (contexto) {
 	"use strict";
 
+	var Linda = contexto.Linda;
+
 	Array.implementar({
+		adicionar: function () {
+			this.push.aplicarComEscopo(this, arguments);
+		},
+
+		tirar: function () {
+			return this.pop();
+		},
+
+		adicionarNoInicio: function () {
+			this.unshift.aplicarComEscopo(this, arguments);
+		},
+
+		tirarDoInicio: function () {
+			return this.shift();
+		},
+
 		clonar: function () {
 			var clone = new Array(this.length);
 			for (var indice = 0; indice < this.length; indice++) {
@@ -605,7 +632,7 @@
 			}
 		}
 	});
-} ());
+} (this));
 (function () {
 	"use strict";
 
@@ -715,10 +742,10 @@
 		}
 	});
 }());
-/*global Linda*/
-
-(function (global) {
+(function (contexto) {
 	"use strict";
+
+	var Linda = contexto.Linda;
 
 	function Objeto() {}
 
@@ -857,14 +884,14 @@
 		}
 	});
 
-	global.Classe = Classe;
-	global.Objeto = Objeto;
+	contexto.Classe = Classe;
+	contexto.Objeto = Objeto;
 }(this));
-/*global Linda*/
-/*global Classe*/
-
-(function (global) {
+(function (contexto) {
 	"use strict";
+
+	var Linda = contexto.Linda;
+	var Classe = contexto.Classe;
 
 	var Tipo = Classe.criarEnumeracaoDeConstantes(Linda.tipos);
 
@@ -1067,7 +1094,7 @@
 			return this.textoIngles;
 		},
 
-		informacional: function () {
+		informacao: function () {
 			return (this.chave >= 100 && this.chave < 200);
 		},
 
@@ -1088,234 +1115,112 @@
 		}
 	});
 
-	global.Tipo = Tipo;
-	global.Evento = Evento;
-	global.Tecla = Tecla;
-	global.AtributoHttp = AtributoHttp;
-	global.MetodoHttp = MetodoHttp;
-	global.CodigoHttp = CodigoHttp;
-	global.TipoDeResposta = TipoDeResposta;
-	global.TipoDeMidia = TipoDeMidia;
-	global.TipoGenericoDeMidia = TipoGenericoDeMidia;
-	global.TipoDeObservacao = TipoDeObservacao;
+	contexto.Tipo = Tipo;
+	contexto.Evento = Evento;
+	contexto.Tecla = Tecla;
+	contexto.AtributoHttp = AtributoHttp;
+	contexto.MetodoHttp = MetodoHttp;
+	contexto.CodigoHttp = CodigoHttp;
+	contexto.TipoDeResposta = TipoDeResposta;
+	contexto.TipoDeMidia = TipoDeMidia;
+	contexto.TipoGenericoDeMidia = TipoGenericoDeMidia;
+	contexto.TipoDeObservacao = TipoDeObservacao;
 }(this));
-/*global AtributoHttp*/
-/*global Classe*/
-/*global CodigoHttp*/
-/*global Dom*/
-/*global Linda*/
-/*global MetodoHttp*/
-/*global TipoDeMidia*/
-/*global TipoDeResposta*/
+/*global Document*/
+/*global Element*/
+/*global HTMLCollection*/
+/*global Node*/
+/*global NodeList*/
+/*global Window*/
 
-(function (global) {
+(function (contexto) {
 	"use strict";
 
-	var RequisicaoHttp = Classe.criar({
-		inicializar: function (uri, assincrono, tipoDeResposta) {
-			this.requisicaoXml = new XMLHttpRequest();
-			this.uri = uri;
-			this.usuario = null;
-			this.senha = null;
-			this.codigoDeEstado = null;
-			this.assincrono = Linda.indefinido(assincrono) ? true : !!assincrono;
-			this.cabecalho = [];
-			if (this.assincrono) {
-				this.requisicaoXml.responseType = tipoDeResposta;
+	var Linda = contexto.Linda;
+	var Classe = contexto.Classe;
+
+	var Dom = Classe.criarSingleton({
+		inicializar: function () {
+			this.janela = window;
+			this.documento = this.janela.document;
+			this.historico = this.janela.history;
+			this.localizacao = this.janela.location;
+		},
+
+		carregarComponentes: function () {
+			this.janelaDom = this.encapsular(this.janela);
+			this.documentoDom = this.encapsular(this.documento);
+		},
+
+		encapsular: function (elementoDom) {
+			var Documento = contexto.Documento;
+			var Elemento = contexto.Elemento;
+			var Janela = contexto.Janela;
+			var Nodo = contexto.Nodo;
+			var Notificavel = contexto.Notificavel;
+			if (Linda.instanciaDe(elementoDom, NodeList)) {
+				return new ListaDom(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, HTMLCollection)) {
+				return new ListaDom(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, Element)) {
+				return new Elemento(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, Document)) {
+				return new Documento(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, Node)) {
+				return new Nodo(elementoDom);
+			} else if (Linda.instanciaDe(elementoDom, Window)) {
+				return new Janela(elementoDom);
+			} else {
+				return new Notificavel(elementoDom);
 			}
 		},
 
-		enviar: function (metodo, dados) {
-			metodo = MetodoHttp.mapear(metodo);
-			this.requisicaoXml.open(metodo, this.uri, this.assincrono, this.usuario, this.senha);
-			this.cabecalho.paraCada(function (atributo) {
-				this.requisicaoXml.setRequestHeader(atributo.nome, atributo.valor);
-			}, this);
-			this.requisicaoXml.send(dados);
-			if (!this.assincrono) {
-				return this.fornecerResposta();
+		extrair: function (suplementoDom) {
+			return suplementoDom.elementoDom;
+		},
+
+		$: function (seletorOuElemento) {
+			if (Linda.instanciaDe(seletorOuElemento, String)) {
+				return this.documentoDom.selecionar(seletorOuElemento);
 			}
+			return this.encapsular(seletorOuElemento);
 		},
 
-		get: function (dados) {
-			return this.enviar(MetodoHttp.GET, dados);
-		},
-
-		put: function (dados) {
-			return this.enviar(MetodoHttp.PUT, dados);
-		},
-
-		post: function (dados) {
-			return this.enviar(MetodoHttp.POST, dados);
-		},
-
-		delete: function (dados) {
-			return this.enviar(MetodoHttp.DELETE, dados);
-		},
-
-		tratarInicio: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarCarregamento(tratador, escopo);
-			return this;
-		},
-
-		tratarProgresso: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarProgresso(tratador, escopo);
-			return this;
-		},
-
-		tratarTermino: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarCarregamentoFinalizado(tratador, escopo);
-			return this;
-		},
-
-		tratarAborto: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarAborto(tratador, escopo);
-			return this;
-		},
-
-		tratarEstouroDeTempo: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarEstouroDeTempo(tratador, escopo);
-			return this;
-		},
-
-		tratarErro: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarErro(tratador, escopo);
-			return this;
-		},
-
-		tratarResposta: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
-				tratador.chamarComEscopo(escopo, this.fornecerResposta(), this.fornecerCodigoDeEstado());
-			}, this);
-			return this;
-		},
-
-		tratarRedirecionamento: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
-				var codigoDeEstado = this.fornecerCodigoDeEstado();
-				if (codigoDeEstado.redirecionamento()) {
-					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado);
-				}
-			}, this);
-			return this;
-		},
-
-		tratarSucesso: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
-				var codigoDeEstado = this.fornecerCodigoDeEstado();
-				if (codigoDeEstado.sucesso()) {
-					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado);
-				}
-			}, this);
-			return this;
-		},
-
-		tratarErroDoCliente: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
-				var codigoDeEstado = this.fornecerCodigoDeEstado();
-				if (codigoDeEstado.erroDoCliente()) {
-					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado);
-				}
-			}, this);
-			return this;
-		},
-
-		tratarErroDoServidor: function (tratador, escopo) {
-			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
-				var codigoDeEstado = this.fornecerCodigoDeEstado();
-				if (codigoDeEstado.erroDoServidor()) {
-					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado);
-				}
-			}, this);
-			return this;
-		},
-
-		abortar: function () {
-			this.requisicaoXml.abort();
-			return this;
-		},
-
-		fixarAtributoDeCabecalho: function (nome, valor) {
-			this.cabecalho.push({nome: nome, valor: valor});
-			return this;
-		},
-
-		fixarAutenticacao: function (usuario, senha) {
-			this.usuario = usuario;
-			this.senha = senha;
-			return this;
-		},
-
-		fixarTempoLimite: function (tempoLimite) {
-			this.requisicaoXml.timeout = tempoLimite;
-			return this;
-		},
-
-		fornecerResposta: function () {
-			return this.requisicaoXml.response;
-		},
-
-		fornecerCodigoDeEstado: function () {
-			if (Linda.nulo(this.codigoDeEstado)) {
-				this.codigoDeEstado = CodigoHttp.mapear(this.requisicaoXml.status);
+		$$: function (seletorOuElemento) {
+			if (Linda.instanciaDe(seletorOuElemento, String)) {
+				return this.documentoDom.selecionarTodos(seletorOuElemento);
 			}
-			return this.codigoDeEstado;
+			return this.encapsular(seletorOuElemento);
 		}
-	});
+	}).instancia();
 
-	var RequisicaoJson = Classe.criar({
-		SuperClasse: RequisicaoHttp,
-
-		inicializar: function (uri, assincrono) {
-			this.super(uri, assincrono, TipoDeResposta.JSON);
-			this.fixarAtributoDeCabecalho(AtributoHttp.ACCEPT, TipoDeMidia.JSON.comoTexto());
+	var ListaDom = Classe.criar({
+		inicializar: function (elementosDom) {
+			this.elementosDom = elementosDom;
 		},
 
-		enviaJson: function () {
-			this.fixarAtributoDeCabecalho(AtributoHttp.CONTENT_TYPE, TipoDeMidia.JSON.comoTexto());
-		},
-
-		fornecerResposta: function () {
-			return JSON.parse(this.requisicaoXml.response);
+		paraCada: function (tratador, escopo) {
+			for (var indice = 0; indice < this.elementosDom.length; indice++) {
+				tratador.chamarComEscopo(escopo, Dom.encapsular(Dom.extrair(this).item(indice), indice));
+			}
 		}
 	});
 
-	var RequisicaoHtml = Classe.criar({
-		SuperClasse: RequisicaoHttp,
-
-		inicializar: function (uri, assincrono) {
-			this.super(uri, assincrono, TipoDeResposta.DOCUMENTO);
-			this.fixarAtributoDeCabecalho(AtributoHttp.ACCEPT, TipoDeMidia.HTML.comoTexto());
-		},
+	contexto.addEventListener("load", function () {
+		Dom.carregarComponentes();
 	});
 
-	var RequisicaoDocumento = Classe.criar({
-		SuperClasse: RequisicaoHttp,
-
-		inicializar: function (uri, assincrono) {
-			this.super(uri, assincrono, TipoDeResposta.DOCUMENTO);
-		}
-	});
-
-	var RequisicaoTexto = Classe.criar({
-		SuperClasse: RequisicaoHttp,
-
-		inicializar: function (uri, assincrono) {
-			this.super(uri, assincrono, TipoDeResposta.TEXTO);
-		}
-	});
-
-	global.RequisicaoJson = RequisicaoJson;
-	global.RequisicaoHtml = RequisicaoHtml;
-	global.RequisicaoDocumento = RequisicaoDocumento;
-	global.RequisicaoTexto = RequisicaoTexto;
+	contexto.Dom = Dom;
+	contexto.ListaDom = ListaDom;
+	contexto.documento = Dom.documento;
+	contexto.janela = Dom.janela;
 }(this));
-/*global Classe*/
-/*global Dom*/
-/*global Tecla*/
-
-(function (global) {
+(function (contexto) {
 	"use strict";
+
+	var Dom = contexto.Dom;
+	var Classe = contexto.Classe;
+	var Tecla = contexto.Tecla;
 
 	var Notificavel = Classe.criar({
 		inicializar: function (elementoDom) {
@@ -1485,14 +1390,14 @@
 		}
 	});
 
-	global.Notificavel = Notificavel;
+	contexto.Notificavel = Notificavel;
 }(this));
-/*global Classe*/
-/*global Dom*/
-/*global Notificavel*/
-
-(function (global) {
+(function (contexto) {
 	"use strict";
+
+	var Dom = contexto.Dom;
+	var Notificavel = contexto.Notificavel;
+	var Classe = contexto.Classe;
 
 	var Janela = Classe.criar({
 		SuperClasse: Notificavel,
@@ -1526,14 +1431,14 @@
 		}
 	});
 
-	global.Janela = Janela;
+	contexto.Janela = Janela;
 }(this));
-/*global Classe*/
-/*global Dom*/
-/*global Notificavel*/
-
-(function (global) {
+(function (contexto) {
 	"use strict";
+
+	var Dom = contexto.Dom;
+	var Notificavel = contexto.Notificavel;
+	var Classe = contexto.Classe;
 
 	var Nodo = Classe.criar({
 		SuperClasse: Notificavel,
@@ -1615,15 +1520,15 @@
 		}
 	});
 
-	global.Nodo = Nodo;
+	contexto.Nodo = Nodo;
 }(this));
-/*global Classe*/
-/*global Dom*/
-/*global Linda*/
-/*global Nodo*/
-
-(function (global) {
+(function (contexto) {
 	"use strict";
+
+	var Dom = contexto.Dom;
+	var Nodo = contexto.Nodo;
+	var Linda = contexto.Linda;
+	var Classe = contexto.Classe;
 
 	var Documento = Classe.criar({
 		SuperClasse: Nodo,
@@ -1673,14 +1578,14 @@
 		}
 	});
 
-	global.Documento = Documento;
+	contexto.Documento = Documento;
 }(this));
-/*global Classe*/
-/*global Dom*/
-/*global Nodo*/
-
-(function (global) {
+(function (contexto) {
 	"use strict";
+
+	var Dom = contexto.Dom;
+	var Nodo = contexto.Nodo;
+	var Classe = contexto.Classe;
 
 	var Elemento = Classe.criar({
 		SuperClasse: Nodo,
@@ -1814,93 +1719,234 @@
 		}
 	});
 
-	global.Elemento = Elemento;
+	contexto.Elemento = Elemento;
 }(this));
-/*global Classe*/
-/*global Document*/
-/*global Documento*/
-/*global Element*/
-/*global Elemento*/
-/*global HTMLCollection*/
-/*global Janela*/
-/*global Linda*/
-/*global Node*/
-/*global NodeList*/
-/*global Nodo*/
-/*global Notificavel*/
-/*global Window*/
-
-(function (global) {
+(function (contexto) {
 	"use strict";
 
-	var Dom = Classe.criarSingleton({
-		inicializar: function () {
-			this.janela = window;
-			this.documento = this.janela.document;
-			this.historico = this.janela.history;
-			this.localizacao = this.janela.location;
-			this.janelaDom = this.encapsular(this.janela);
-			this.documentoDom = this.encapsular(this.documento);
-		},
+	var Dom = contexto.Dom;
+	var Linda = contexto.Linda;
+	var Classe = contexto.Classe;
+	var AtributoHttp = contexto.AtributoHttp;
+	var CodigoHttp = contexto.CodigoHttp;
+	var MetodoHttp = contexto.MetodoHttp;
+	var TipoDeMidia = contexto.TipoDeMidia;
+	var TipoDeResposta = contexto.TipoDeResposta;
 
-		encapsular: function (elementoDom) {
-			if (Linda.instanciaDe(elementoDom, NodeList)) {
-				return new ListaDom(elementoDom);
-			} else if (Linda.instanciaDe(elementoDom, HTMLCollection)) {
-				return new ListaDom(elementoDom);
-			} else if (Linda.instanciaDe(elementoDom, Element)) {
-				return new Elemento(elementoDom);
-			} else if (Linda.instanciaDe(elementoDom, Document)) {
-				return new Documento(elementoDom);
-			} else if (Linda.instanciaDe(elementoDom, Node)) {
-				return new Nodo(elementoDom);
-			} else if (Linda.instanciaDe(elementoDom, Window)) {
-				return new Janela(elementoDom);
-			} else {
-				return new Notificavel(elementoDom);
+	var RequisicaoHttp = Classe.criar({
+		inicializar: function (uri, assincrono, tipoDeResposta) {
+			this.requisicaoXml = new XMLHttpRequest();
+			this.uri = uri;
+			this.usuario = null;
+			this.senha = null;
+			this.codigoDeEstado = null;
+			this.metodo = null;
+			this.assincrono = Linda.indefinido(assincrono) ? true : !!assincrono;
+			this.cabecalho = [];
+			if (this.assincrono) {
+				this.requisicaoXml.responseType = tipoDeResposta;
 			}
 		},
 
-		extrair: function (suplementoDom) {
-			return suplementoDom.elementoDom;
+		enviar: function (metodo, dados) {
+			this.metodo = MetodoHttp.mapear(metodo);
+			this.requisicaoXml.open(this.metodo, this.uri, this.assincrono, this.usuario, this.senha);
+			this.cabecalho.paraCada(function (atributo) {
+				this.requisicaoXml.setRequestHeader(atributo.nome, atributo.valor);
+			}, this);
+			this.requisicaoXml.send(dados);
+			if (!this.assincrono) {
+				return this.fornecerResposta();
+			}
 		},
 
-		$: function (seletorOuElemento) {
-			if (Linda.instanciaDe(seletorOuElemento, String)) {
-				return this.documentoDom.selecionar(seletorOuElemento);
-			}
-			return this.encapsular(seletorOuElemento);
+		get: function (dados) {
+			return this.enviar(MetodoHttp.GET, dados);
 		},
 
-		$$: function (seletorOuElemento) {
-			if (Linda.instanciaDe(seletorOuElemento, String)) {
-				return this.documentoDom.selecionarTodos(seletorOuElemento);
-			}
-			return this.encapsular(seletorOuElemento);
-		}
-	}).instancia();
-
-	var ListaDom = Classe.criar({
-		inicializar: function (elementosDom) {
-			this.elementosDom = elementosDom;
+		put: function (dados) {
+			return this.enviar(MetodoHttp.PUT, dados);
 		},
 
-		paraCada: function (tratador, escopo) {
-			for (var indice = 0; indice < this.elementosDom.length; indice++) {
-				tratador.chamarComEscopo(escopo, Dom.encapsular(this.elementosDom.item(indice), indice));
+		post: function (dados) {
+			return this.enviar(MetodoHttp.POST, dados);
+		},
+
+		delete: function (dados) {
+			return this.enviar(MetodoHttp.DELETE, dados);
+		},
+
+		tratarInicio: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarCarregamento(tratador, escopo);
+			return this;
+		},
+
+		tratarProgresso: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarProgresso(tratador, escopo);
+			return this;
+		},
+
+		tratarTermino: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarCarregamentoFinalizado(tratador, escopo);
+			return this;
+		},
+
+		tratarAborto: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarAborto(tratador, escopo);
+			return this;
+		},
+
+		tratarEstouroDeTempo: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarEstouroDeTempo(tratador, escopo);
+			return this;
+		},
+
+		tratarErro: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarErro(tratador, escopo);
+			return this;
+		},
+
+		tratarResposta: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
+				tratador.chamarComEscopo(escopo, this.fornecerResposta(), this.fornecerCodigoDeEstado(), this);
+			}, this);
+			return this;
+		},
+
+		tratarInformacao: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
+				var codigoDeEstado = this.fornecerCodigoDeEstado();
+				if (codigoDeEstado.informacao()) {
+					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado, this);
+				}
+			}, this);
+			return this;
+		},
+
+		tratarSucesso: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
+				var codigoDeEstado = this.fornecerCodigoDeEstado();
+				if (codigoDeEstado.sucesso()) {
+					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado, this);
+				}
+			}, this);
+			return this;
+		},
+
+		tratarRedirecionamento: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
+				var codigoDeEstado = this.fornecerCodigoDeEstado();
+				if (codigoDeEstado.redirecionamento()) {
+					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado, this);
+				}
+			}, this);
+			return this;
+		},
+
+		tratarErroDoCliente: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
+				var codigoDeEstado = this.fornecerCodigoDeEstado();
+				if (codigoDeEstado.erroDoCliente()) {
+					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado, this);
+				}
+			}, this);
+			return this;
+		},
+
+		tratarErroDoServidor: function (tratador, escopo) {
+			Dom.$(this.requisicaoXml).tratarCarregamento(function () {
+				var codigoDeEstado = this.fornecerCodigoDeEstado();
+				if (codigoDeEstado.erroDoServidor()) {
+					tratador.chamarComEscopo(escopo, this.fornecerResposta(), codigoDeEstado, this);
+				}
+			}, this);
+			return this;
+		},
+
+		abortar: function () {
+			this.requisicaoXml.abort();
+			return this;
+		},
+
+		fixarAtributoDeCabecalho: function (nome, valor) {
+			this.cabecalho.push({nome: nome, valor: valor});
+			return this;
+		},
+
+		fixarAutenticacao: function (usuario, senha) {
+			this.usuario = usuario;
+			this.senha = senha;
+			return this;
+		},
+
+		fixarTempoLimite: function (tempoLimite) {
+			this.requisicaoXml.timeout = tempoLimite;
+			return this;
+		},
+
+		fornecerResposta: function () {
+			return this.requisicaoXml.response;
+		},
+
+		fornecerCodigoDeEstado: function () {
+			if (Linda.nulo(this.codigoDeEstado)) {
+				this.codigoDeEstado = CodigoHttp.mapear(this.requisicaoXml.status);
 			}
+			return this.codigoDeEstado;
 		}
 	});
 
-	global.Dom = Dom;
-	global.ListaDom = ListaDom;
-	global.documento = Dom.documento;
-	global.janela = Dom.janela;
-}(this));
-/*global Linda*/
+	var RequisicaoJson = Classe.criar({
+		SuperClasse: RequisicaoHttp,
 
-(function () {
+		inicializar: function (uri, assincrono) {
+			this.super(uri, assincrono, TipoDeResposta.JSON);
+			this.fixarAtributoDeCabecalho(AtributoHttp.ACCEPT, TipoDeMidia.JSON.comoTexto());
+		},
+
+		enviaJson: function () {
+			this.fixarAtributoDeCabecalho(AtributoHttp.CONTENT_TYPE, TipoDeMidia.JSON.comoTexto());
+		},
+
+		fornecerResposta: function () {
+			return JSON.parse(this.requisicaoXml.response);
+		}
+	});
+
+	var RequisicaoHtml = Classe.criar({
+		SuperClasse: RequisicaoHttp,
+
+		inicializar: function (uri, assincrono) {
+			this.super(uri, assincrono, TipoDeResposta.DOCUMENTO);
+			this.fixarAtributoDeCabecalho(AtributoHttp.ACCEPT, TipoDeMidia.HTML.comoTexto());
+		},
+	});
+
+	var RequisicaoDocumento = Classe.criar({
+		SuperClasse: RequisicaoHttp,
+
+		inicializar: function (uri, assincrono) {
+			this.super(uri, assincrono, TipoDeResposta.DOCUMENTO);
+		}
+	});
+
+	var RequisicaoTexto = Classe.criar({
+		SuperClasse: RequisicaoHttp,
+
+		inicializar: function (uri, assincrono) {
+			this.super(uri, assincrono, TipoDeResposta.TEXTO);
+		}
+	});
+
+	contexto.RequisicaoJson = RequisicaoJson;
+	contexto.RequisicaoHtml = RequisicaoHtml;
+	contexto.RequisicaoDocumento = RequisicaoDocumento;
+	contexto.RequisicaoTexto = RequisicaoTexto;
+}(this));
+(function (contexto) {
 	"use strict";
+
+	var Linda = contexto.Linda;
 
 	Object.prototype.definirPropriedades({
 		cadaPropriedade: Linda.propriedadesDeAtributos,
@@ -1938,6 +1984,7 @@
 		privadoFornecerDescritorDePropriedade: Linda.propriedadesDeAtributos,
 		definirPropriedade: Linda.propriedadesDeAtributos,
 		definirPropriedades: Linda.propriedadesDeAtributos,
+		removerPropriedade: Linda.propriedadesDeAtributos,
 		privadoDefinirPropriedade: Linda.propriedadesDeAtributos,
 		fundir: Linda.propriedadesDeAtributos,
 		observar: Linda.propriedadesDeAtributos,
@@ -1958,6 +2005,8 @@
 	});
 
 	Array.prototype.definirPropriedades({
+		adicionar: Linda.propriedadesDeAtributos,
+		adicionarNoInicio: Linda.propriedadesDeAtributos,
 		clonar: Linda.propriedadesDeAtributos,
 		contem: Linda.propriedadesDeAtributos,
 		dentroDosLimites: Linda.propriedadesDeAtributos,
@@ -1976,7 +2025,9 @@
 		reduzirSemUltimo: Linda.propriedadesDeAtributos,
 		removerPosicao: Linda.propriedadesDeAtributos,
 		removerElemento: Linda.propriedadesDeAtributos,
-		vazio: Linda.propriedadesDeAtributos
+		vazio: Linda.propriedadesDeAtributos,
+		tirar: Linda.propriedadesDeAtributos,
+		tirarDoInicio: Linda.propriedadesDeAtributos
 	});
 
 	String.prototype.definirPropriedades({
@@ -1997,4 +2048,4 @@
 		sortear: Linda.propriedadesDeAtributos,
 		sortearInteiro: Linda.propriedadesDeAtributos
 	});
-}());
+}(this));

@@ -8,7 +8,7 @@
 		<script src="../js/jsHint.js" type="application/javascript"></script>
 		<script src="../js/verifica.js" type="application/javascript"></script>
 		<script defer type="application/javascript">
-			new TratadorDeCarregamento().paraCarregamento(function () {
+			Dom.$(janela).tratarCarregamento(function () {
 				var arquivos = ["../js/verifica.js"];
 				var verificacao = new Verifica(arquivos);
 				verificacao.verificar();
