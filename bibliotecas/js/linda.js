@@ -1197,11 +1197,12 @@
 	var ListaDom = Classe.criar({
 		inicializar: function (elementosDom) {
 			this.elementosDom = elementosDom;
+			this.elementoDom = elementosDom;
 		},
 
 		paraCada: function (tratador, escopo) {
 			for (var indice = 0; indice < this.elementosDom.length; indice++) {
-				tratador.chamarComEscopo(escopo, Dom.encapsular(Dom.extrair(this).item(indice), indice));
+				tratador.chamarComEscopo(escopo, Dom.encapsular(this.elementosDom.item(indice), indice));
 			}
 		}
 	});
@@ -1984,7 +1985,7 @@
 		privadoFornecerDescritorDePropriedade: Linda.propriedadesDeAtributos,
 		definirPropriedade: Linda.propriedadesDeAtributos,
 		definirPropriedades: Linda.propriedadesDeAtributos,
-		removerPropriedade: Linda.propriedadesDeAtributos,
+		// removerPropriedade: Linda.propriedadesDeAtributos,
 		privadoDefinirPropriedade: Linda.propriedadesDeAtributos,
 		fundir: Linda.propriedadesDeAtributos,
 		observar: Linda.propriedadesDeAtributos,
